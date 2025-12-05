@@ -29,13 +29,18 @@ shortArmLengthToCounterWeightRadiusRatio = 2 # user defined
 # Increasing this might add power, to a point. 
 additionalHeight = .3048 # meters
 
+# 0.1 - 0.2: Smooth wood on smooth wood (lubricated).
+# 0.4 - 0.5: Wood dragging on dirt/grass.
+# 0.6 - 0.8: Rough stone dragging on dirt/grass.
+frictionCoefficient = .2
+
 # -------------------------------------------------------------------
 
 # calculate Total Arm Length
 counterWeightRadius = counterWeightDiameter / 2
 shortArmLength = counterWeightRadius * shortArmLengthToCounterWeightRadiusRatio
 longArmLength = shortArmLength * longArmLengthToshortArmLengthRatio
-totalArmLength = shortArmLength + longArmLength
+beamLength = shortArmLength + longArmLength
 
 # -------------------------------------------------------------------
 
@@ -48,16 +53,32 @@ baseHeight = shortArmLength + counterWeightOverhang + additionalHeight
 # length of each side of the base
 baseSideLength = (baseHeight * 2) / math.sqrt(3) 
 
-additionalBaseWidthRatio = 2 # user defined
+additionalBaseWidthRatio = 2 # user defined - Additional width to add base support
 
 addtionalBaseWidth = baseSideLength * additionalBaseWidthRatio
 
 # print(baseSideLength)
 # print(addtionalBaseWidth)
 # print(baseHeight)
-print(f"{totalArmLength = } m")
+print(f"{beamLength = } m")
 print(f"{baseHeight = } m")
 print(f"{addtionalBaseWidth = } m")
+
+# -------------------------------------------------------------------
+
+# figure out mass of beam
+
+# in meters
+beamThickness = 0.0254 # user defined - 1 inch
+beamWidth = 0.0762 # user defined - 3 inch
+
+beamVolume = beamLength * beamThickness * beamWidth
+
+# kg/m^3
+beamMaterialDensity = 500 # user defined - Will depend on type of wood
+beamMass = beamVolume * beamMaterialDensity
+
+print(f"{beamMass = } m")
 
 # -------------------------------------------------------------------
 
@@ -124,12 +145,28 @@ print(f"{maximumRange = } m")
 
 # accounting for sling
 
+# phase one The Slide
+
 # 0 long arm is vertical - payload is resting at bottom 
 # 90 arm is horizontal
 startingLongArmAngle = 90 + startingCounterWeightAngle
 
-friction = 5
+# Normal Force (N newtons) How much force is pressing down against ground
+normalForce = payloadMass * gravity
+
+# (N newtons)
+frictionForce = frictionCoefficient * normalForce
 
 # Tnet
-netTorqueOnMainAxle = (counterWeightMass * gravity * math.sin(startingLongArmAngle)) - (friction * longArmLength)
+netTorqueOnMainAxle = (counterWeightMass * gravity * math.sin(startingLongArmAngle)) - (frictionForce * longArmLength)
+
+
+centerOfBeam = ( shortArmLength + longArmLength ) / 2
+distanceFromCenterToPivotPoint = longArmLength - centerOfBeam
+
+# parallel axis theorem
+# iBeam 
+#swingArmMomentOfInteria = ( (1/12) *  beamMass)
+
+# phase two Lift and Whip
 
