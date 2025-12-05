@@ -42,6 +42,8 @@ shortArmLength = counterWeightRadius * shortArmLengthToCounterWeightRadiusRatio
 longArmLength = shortArmLength * longArmLengthToshortArmLengthRatio
 beamLength = shortArmLength + longArmLength
 
+slingLength = longArmLength * .9 # .9 is a hardcoded ratio. Ratio will be user defined. 
+
 # -------------------------------------------------------------------
 
 # find dimensions of the base
@@ -78,7 +80,7 @@ beamVolume = beamLength * beamThickness * beamWidth
 beamMaterialDensity = 500 # user defined - Will depend on type of wood
 beamMass = beamVolume * beamMaterialDensity
 
-print(f"{beamMass = } m")
+print(f"{beamMass = } kg")
 
 # -------------------------------------------------------------------
 
@@ -143,8 +145,6 @@ print(f"{maximumRange = } m")
 
 # -------------------------------------------------------------------
 
-# accounting for sling
-
 # phase one The Slide
 
 # 0 long arm is vertical - payload is resting at bottom 
@@ -158,15 +158,74 @@ normalForce = payloadMass * gravity
 frictionForce = frictionCoefficient * normalForce
 
 # Tnet
-netTorqueOnMainAxle = (counterWeightMass * gravity * math.sin(startingLongArmAngle)) - (frictionForce * longArmLength)
-
+netTorqueOnMainAxle = (counterWeightMass * gravity * shortArmLength * math.sin(startingLongArmAngle)) - (frictionForce * longArmLength)
 
 centerOfBeam = ( shortArmLength + longArmLength ) / 2
 distanceFromCenterToPivotPoint = longArmLength - centerOfBeam
 
-# parallel axis theorem
-# iBeam 
-#swingArmMomentOfInteria = ( (1/12) *  beamMass)
+# -------------------------------------------------------------------
+
+# calculate moment of intertia for beam and system
+# moment of interia - rotational equivalent of mass, representing an object's resistance to changes in its rotational speed.
+
+# use parallel axis theorem
+
+# hard it is to rotate the empty swing arm
+beamMomentOfInteria = ( (1/12) *  beamMass * math.pow(beamLength, 2) )  + ( beamMass * math.pow(distanceFromCenterToPivotPoint,2) )
+
+# How hard it is to rotate the entire loaded machine
+systemMomentOfInteria = beamMomentOfInteria + (counterWeightMass * math.pow(shortArmLength,2) ) + (payloadMass * pow(longArmLength, 2) )
+
+print(f"{beamMomentOfInteria = } Kg/m^2")
+print(f"{systemMomentOfInteria = } Kg/m^2")
+
+
+armAngle = startingLongArmAngle # this will need to be incremented in the loop
+slingToArmAngle = startingLongArmAngle # this will also need to be incremented 
+
+# delta time - constant
+# 1 is too chopy. Standard physics sims are set to 10 milliseconds. .01 = 10 miliseconds. Will change in later tests.
+dt = .01
+
+elapsedTime = 0
+
+# The Slide loop
+while elapsedTime < 100 :
+
+    # calculate slingToBeamAngle 
+    
+    
+    # yTip - height of the payload tip of the beam at a given moment
+    armTipHeight = baseHeight - (math.cos(180 - armAngle) * longArmLength)
+
+    # note The sine of an angle can never be greater than 1 or less than -1.
+    # If Ratio > 1, cap it at 1. If Ratio < -1, cap it at -1.
+    ratio = armTipHeight / slingLength
+    if ratio > 1:
+        ratio = 1
+
+    angleOfGround = math.asin(ratio) # I think this might be in radians # continue here
+
+    # calculate net torque
+    # force trying to move rotate machine forward
+    # tDrive
+    positiveTorque = counterWeightMass * gravity * shortArmLength * math.sin(armAngle)
+
+    # tDrag
+    negativeTorque = frictionForce * longArmLength * math.sin(slingToArmAngle)
+
+    # tNet
+    netTorque = positiveTorque - negativeTorque
+
+    # a - angular acceleration in rads/s^2
+    angularAcceleration = netTorque / systemMomentOfInteria
+
+    angularVelocity += angularAcceleration * dt
+    armAngle = armAngle + ( angularVelocity * dt )
+
+    elapsedTime += dt#
+    # exit condition
+
 
 # phase two Lift and Whip
 

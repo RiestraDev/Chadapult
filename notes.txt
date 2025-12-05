@@ -1,0 +1,12 @@
+beam = swing arm
+short arm is the side closer to the counterweight
+long arm is the side closer to the payload
+
+critical design ratios
+mass ratio Mcw : Mp should be 100:1
+arm length ratio: Llong : Lshort typically 3.75:1 to 4:1
+sling length: roughly equal to Llong
+
+
+todo:
+maybe change all references to arm to beam for consistency
